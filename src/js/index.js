@@ -9,15 +9,53 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 const refs = {
   form: document.querySelector('.search-form'),
   gallery: document.querySelector('.gallery'),
+  btn: document.querySelector('.load-more'),
 };
-const { form, gallery } = refs;
-const btn = document.querySelector('.load-more');
+const { form, gallery, btn } = refs;
+
 let query = '';
 let page = 1;
 const perPage = 40;
 
 form.addEventListener('submit', onSubmit);
+//
 
+function createMarkup(images) {
+  if (!gallery) {
+    return;
+  }
+
+  const markup = images
+    .map(image => {
+      const {
+        webformatURL,
+        largeImageURL,
+        tags,
+        likes,
+        views,
+        comments,
+        downloads,
+      } = image;
+      return `
+      <a class="gallery__link" href="${largeImageURL}">
+      <div class="photo-card">
+        <img class="gallery__image" src="${webformatURL}" alt="${tags}" width="440" loading="lazy" />
+        <div class="info">
+          <p class="info-item"><b>Likes: </b>${likes}</p>
+          <p class="info-item"><b>Views: </b>${views}</p>
+          <p class="info-item"><b>Comments: </b>${comments}</p>
+          <p class="info-item"><b>Downloads: </b>${downloads}</p>
+        </div>
+        </div>
+      </a>`;
+    })
+    .join('');
+
+  // gallery.innerHTML = markup;
+  gallery.insertAdjacentHTML('beforeend', markup);
+  // lightbox.refresh();
+}
+//
 function onSubmit(evt) {
   evt.preventDefault();
   page = 1;
@@ -36,8 +74,8 @@ function onSubmit(evt) {
           'Sorry, there are no images matching your search query. Please try again.'
         );
       } else {
-        Notify.success(`Hooray! We found ${data.totalHits} images.`);
         createMarkup(data.hits);
+        Notify.success(`Hooray! We found ${data.totalHits} images.`);
         // scrollToGallery();
         lightbox.refresh();
       }
@@ -56,72 +94,40 @@ const lightbox = new SimpleLightbox('.gallery a', {
   captionDelay: 250,
 });
 
-function createMarkup(array) {
-  // if (!gallery) {
-  //   return;
-  // }
-
-  const markup = array
-    .map(image => {
-      const {
-        webformatURL,
-        largeImageURL,
-        tags,
-        likes,
-        views,
-        comments,
-        downloads,
-      } = image;
-      return `<div class="gallery__item"
-      <a class="gallery__link" href="${largeImageURL}">
-      <img class="gallery__image" src="${webformatURL}" alt="${tags}" width="300" loading="lazy" />
-      
-      <div class="info">
-      <p class="info-item"><b>Likes: </b>${likes}</p>
-      <p class="info-item"><b>Views: </b>${views}</p>
-      <p class="info-item"><b>Comments: </b>${comments}</p>
-      <p class="info-item"><b>Downloads: </b>${downloads}</p>
-      </div></div> 
-      </a>
-      `;
-    })
-    .join('');
-
-  gallery.innerHTML = markup;
-  lightbox.refresh();
-}
-
 // s
 
 //
 // Прокручування сторінки
-function scrollToGallery() {
-  const { height: cardHeight } = document
-    .querySelector('.gallery')
-    .firstElementChild.getBoundingClientRect();
+// function scrollToGallery() {
+//   const { height: cardHeight } = document
+//     .querySelector('.gallery')
+//     .firstElementChild.getBoundingClientRect();
 
-  window.scrollBy({
-    top: cardHeight * 2,
-    behavior: 'smooth',
-  });
-}
-btn.addEventListener('click', loadMoreImg);
+//   window.scrollBy({
+//     top: cardHeight * 2,
+//     behavior: 'smooth',
+//   });
+// }
+// btn.addEventListener('click', loadMoreImg);
 
 function loadMoreImg() {
   page += 1;
   // lightbox.destroy();
-  fetchImages()
+
+  fetchImages(query, page, perPage)
     .then(data => {
       createMarkup(data.hits);
       lightbox.refresh();
 
-      const totalPages = Math.round(data.totalHits / perPage);
+      const totalPages = Math.random(totalHits / perPage);
 
-      gallery.insertAdjacentHTML('beforeend', createMarkup);
+      gallery.insertAdjacentHTML('beforeend', createMarkup(hits));
       if (page > totalPages) {
         Notify.info(
           "We're sorry, but you've reached the end of search results."
         );
+        // btn.removeEventListener('click', loadMoreImg);
+        // window.removeEventListener('scroll', showLoadMorePage);
         // lightbox.refresh();
       }
     })
@@ -129,14 +135,14 @@ function loadMoreImg() {
       console.error('Error fetching images:', error);
     });
 }
-// function checkIfEndOfPage() {
-//   return (
-//     window.innerHeight + window.scrollY >= document.documentElement.scrollHeight
-//   );
-// }
+function checkIfEndOfPage() {
+  return (
+    window.innerHeight + window.scrollY >= document.documentElement.scrollHeight
+  );
+}
 function showLoadMorePage() {
   if (checkIfEndOfPage()) {
     loadMoreImg();
   }
 }
-// window.addEventListener('scroll', showLoadMorePage);
+window.addEventListener('scroll', showLoadMorePage);

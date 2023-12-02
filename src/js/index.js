@@ -1,5 +1,6 @@
 import { fetchImages } from './fetchImages';
 import '../sass/styles.css';
+
 import { Notify } from 'notiflix';
 // Описаний в документації
 import SimpleLightbox from 'simplelightbox';
@@ -41,10 +42,10 @@ function createMarkup(images) {
       <div class="photo-card">
         <img class="gallery__image" src="${webformatURL}" alt="${tags}" width="440" loading="lazy" />
         <div class="info">
-          <p class="info-item"><b>Likes: </b>${likes}</p>
-          <p class="info-item"><b>Views: </b>${views}</p>
-          <p class="info-item"><b>Comments: </b>${comments}</p>
-          <p class="info-item"><b>Downloads: </b>${downloads}</p>
+          <p class="info-item"><b>Likes: </b><span class="num">${likes}</span></p>
+          <p class="info-item"><b>Views: </b><span class="num">${views}</span></p>
+          <p class="info-item"><b>Comments: </b><span class="num">${comments}</span></p>
+          <p class="info-item"><b>Downloads: </b><span class="num">${downloads}</span></p>
         </div>
         </div>
       </a>`;
@@ -53,7 +54,6 @@ function createMarkup(images) {
 
   // gallery.innerHTML = markup;
   gallery.insertAdjacentHTML('beforeend', markup);
-  // lightbox.refresh();
 }
 //
 function onSubmit(evt) {
@@ -76,11 +76,10 @@ function onSubmit(evt) {
       } else {
         createMarkup(data.hits);
         Notify.success(`Hooray! We found ${data.totalHits} images.`);
-        // scrollToGallery();
         lightbox.refresh();
       }
       if (data.totalHits > perPage) {
-        window.addEventListener('scroll', scrollToGallery);
+        window.addEventListener('scroll', showLoadMorePage);
       }
     })
     .catch(error => {
@@ -96,39 +95,21 @@ const lightbox = new SimpleLightbox('.gallery a', {
 
 // s
 
-//
-// Прокручування сторінки
-// function scrollToGallery() {
-//   const { height: cardHeight } = document
-//     .querySelector('.gallery')
-//     .firstElementChild.getBoundingClientRect();
-
-//   window.scrollBy({
-//     top: cardHeight * 2,
-//     behavior: 'smooth',
-//   });
-// }
-// btn.addEventListener('click', loadMoreImg);
-
 function loadMoreImg() {
   page += 1;
-  // lightbox.destroy();
 
   fetchImages(query, page, perPage)
     .then(data => {
       createMarkup(data.hits);
       lightbox.refresh();
 
-      const totalPages = Math.random(totalHits / perPage);
+      const totalPages = Math.ceil(totalHits / perPage);
 
       gallery.insertAdjacentHTML('beforeend', createMarkup(hits));
       if (page > totalPages) {
         Notify.info(
           "We're sorry, but you've reached the end of search results."
         );
-        // btn.removeEventListener('click', loadMoreImg);
-        // window.removeEventListener('scroll', showLoadMorePage);
-        // lightbox.refresh();
       }
     })
     .catch(error => {

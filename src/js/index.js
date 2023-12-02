@@ -17,14 +17,15 @@ const { form, gallery, btn } = refs;
 let query = '';
 let page = 1;
 const perPage = 40;
+let totalHits = 0;
 
 form.addEventListener('submit', onSubmit);
 //
 
 function createMarkup(images) {
-  if (!gallery) {
-    return;
-  }
+  // if (!gallery) {
+  //   return;
+  // }
 
   const markup = images
     .map(image => {
@@ -93,7 +94,7 @@ const lightbox = new SimpleLightbox('.gallery a', {
   captionDelay: 250,
 });
 
-// s
+//
 
 function loadMoreImg() {
   page += 1;
@@ -103,27 +104,27 @@ function loadMoreImg() {
       createMarkup(data.hits);
       lightbox.refresh();
 
-      const totalPages = Math.ceil(totalHits / perPage);
+      const totalPages = Math.ceil(data.totalHits / perPage);
 
-      gallery.insertAdjacentHTML('beforeend', createMarkup(hits));
       if (page > totalPages) {
         Notify.info(
           "We're sorry, but you've reached the end of search results."
         );
+        window.removeEventListener('scroll', showLoadMorePage);
       }
     })
     .catch(error => {
-      console.error('Error fetching images:', error);
+      console.error(error);
     });
+}
+
+function showLoadMorePage() {
+  if (checkIfEndOfPage()) {
+    loadMoreImg();
+  }
 }
 function checkIfEndOfPage() {
   return (
     window.innerHeight + window.scrollY >= document.documentElement.scrollHeight
   );
 }
-function showLoadMorePage() {
-  if (checkIfEndOfPage()) {
-    loadMoreImg();
-  }
-}
-// window.addEventListener('scroll', showLoadMorePage);

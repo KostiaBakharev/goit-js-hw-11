@@ -126,4 +126,4 @@ function showLoadMorePage() {
     loadMoreImg();
   }
 }
-window.addEventListener('scroll', showLoadMorePage);
+// window.addEventListener('scroll', showLoadMorePage);
